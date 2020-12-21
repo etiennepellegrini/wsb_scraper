@@ -54,19 +54,20 @@ def get_tickers(sub, stock_list, prev_tickers, nPosts=-1):
 
     top_tickers = sorted(weekly_tickers, key=weekly_tickers.get, reverse=True)[:5]
 
-    to_buy = []
-    to_sell = []
-    # Removed this for now - if a ticker is at the top, it's prob still a buy?
     to_buy = top_tickers
+    to_sell = []
+    # The sell list if global for now. Not sure there's a point to a per sub
+    # one?
+    # Removed this for now - if a ticker is at the top, it's prob still a buy?
     # for new in top_tickers:
         # if new not in prev_tickers:
             # to_buy.append(new)
-    for old in prev_tickers:
-        if old not in top_tickers:
-            to_sell.append(old)
-
+    # for old in prev_tickers:
+        # if old not in top_tickers:
+            # to_sell.append(old)
     # to_buy = [ticker + '\n' for ticker in to_buy]
     # to_sell = [ticker + '\n' for ticker in to_sell]
+
     write_to_file(
         'output/' + sub+'.txt',
          map(lambda x: x+"\n", to_buy),
@@ -95,9 +96,20 @@ def main():
         for stock in to_buy:
             if stock not in positions:
                 positions.append(stock)
+
+    # prev.txt is a global buy list. Could be renamed
     prev = open("output/prev.txt", "w")
     prev.writelines(map(lambda x: x+"\n", positions))
     prev.close()
+
+    # The sell list should be computed here, once all subs are processed
+    to_sell = []
+    for ticker in prev_tickers:
+        if ticker not in positions:
+            to_sell.append(ticker)
+    sell = open("output/to_sell.txt", "w")
+    sell.writelines(map(lambda x: x+"\n", to_sell))
+    sell.close()
 
 
 if __name__ == '__main__':
