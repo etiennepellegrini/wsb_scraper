@@ -23,6 +23,7 @@ source wsb_scraper_venv/bin/activate
 ```bash
 pip install praw
 pip install pandas
+pip install robin-stocks
 ```
 
 ## Run & profit :moneybag: :rocket:

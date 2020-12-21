@@ -48,7 +48,21 @@ def get_prev_tickers(filename):
     return prev_tickers
 
 
-def get_tickers(sub, stock_list, prev_tickers, metric='m', nPosts=-1,
+def get_greeks(to_buy):
+    """ Use the Robinhood API to get the Greeks. """
+    # Setup API and login
+    # Interrogate API
+    for ticker in to_buy:
+        tickerDict= robin_stocks.options.get_option_market_data(
+            ticker,
+            expirationDate,
+            strikePrice,
+            optionType,
+            info=None
+        )
+
+
+-def get_tickers(sub, stock_list, prev_tickers, metric='m', nPosts=-1,
                 top=5, time='week', inputDir='./input', outputDir='./output',
                 verbose=0):
     reddit = praw.Reddit(
@@ -169,6 +183,9 @@ def get_tickers(sub, stock_list, prev_tickers, metric='m', nPosts=-1,
 
     # Removed from upstream: - per-ub sell list ; not buying items that were
     # already on the buy list
+
+    # Get Greeks
+    to_buy = get_greeks(to_buy)
 
     # Write sub-specific file
     write_to_file(

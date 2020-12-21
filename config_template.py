@@ -22,4 +22,8 @@ api_secret="gko_LXELoV07ZBNUXrvWZfzE3aI"
 # u/<Reddit username>)
 api_user_agent="android:com.example.myredditapp:v1.2.3 (by /u/kemitche)"
 
+# --- Robinhood
+rh_username="<username>"
+rh_password="<password>"
+
 #---------------------------------------------------------------------------
