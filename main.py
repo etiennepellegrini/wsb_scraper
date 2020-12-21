@@ -23,18 +23,22 @@ def get_prev_tickers():
     return prev_tickers
 
 
-def get_tickers(sub, stock_list, prev_tickers):
+def get_tickers(sub, stock_list, prev_tickers, nPosts=-1):
     reddit = praw.Reddit(
         client_id=config.api_id,
         client_secret=config.api_secret,
-        user_agent="WSB Scraping",
+        user_agent=config.api_user_agent,
     )
     weekly_tickers = {}
 
     regex_pattern = r'\b([A-Z]+)\b'
     ticker_dict = stock_list
     blacklist = ["A", "I", "DD", "WSB", "YOLO", "RH", "EV"]
-    for submission in reddit.subreddit(sub).top("week"):
+    for (i, submission) in enumerate(reddit.subreddit(sub).top("week")):
+        if nPosts > 0:
+            print(f'Processing submission {i} of {nPosts}')
+            if i == nPosts:
+                break
         strings = [submission.title]
         submission.comments.replace_more(limit=0)
         for comment in submission.comments.list():
@@ -47,19 +51,27 @@ def get_tickers(sub, stock_list, prev_tickers):
                             weekly_tickers[phrase] = 1
                         else:
                             weekly_tickers[phrase] += 1
+
     top_tickers = sorted(weekly_tickers, key=weekly_tickers.get, reverse=True)[:5]
-    top_tickers = [ticker + '\n' for ticker in top_tickers]
 
     to_buy = []
     to_sell = []
-    for new in top_tickers:
-        if new not in prev_tickers:
-            to_buy.append(new)
+    # Removed this for now - if a ticker is at the top, it's prob still a buy?
+    to_buy = top_tickers
+    # for new in top_tickers:
+        # if new not in prev_tickers:
+            # to_buy.append(new)
     for old in prev_tickers:
         if old not in top_tickers:
             to_sell.append(old)
 
-    write_to_file('output/' + sub+'.txt', to_buy, to_sell)
+    # to_buy = [ticker + '\n' for ticker in to_buy]
+    # to_sell = [ticker + '\n' for ticker in to_sell]
+    write_to_file(
+        'output/' + sub+'.txt',
+         map(lambda x: x+"\n", to_buy),
+         map(lambda x: x+"\n", to_sell)
+    )
     return to_buy
 
 
@@ -78,12 +90,13 @@ def main():
     stock_list = get_stock_list()
     positions = []
     for sub in subs:
+        print(f'Retrieving tickers for {sub}')
         to_buy = get_tickers(sub, stock_list, prev_tickers)
         for stock in to_buy:
             if stock not in positions:
                 positions.append(stock)
     prev = open("output/prev.txt", "w")
-    prev.writelines(positions)
+    prev.writelines(map(lambda x: x+"\n", positions))
     prev.close()
 
 
