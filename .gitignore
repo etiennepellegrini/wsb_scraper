@@ -3,3 +3,6 @@ config.py
 
 # Python cache
 __pycache__
+
+# Virtual env
+wsb_scraper_venv
