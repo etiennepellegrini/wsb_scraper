@@ -1,8 +1,8 @@
 BUY:
-TSLA
-PLTR
-AMD
-NIO
-SQ
+TSLA   m=   274, s=  2917 (post: I wasted all my money until I started buying stocks., comment: ['TSLA tequila costs $250 per bottle! And yet it’s now sold out, so you will need to pay extra if you want to buy it now.', 15, '/r/stocks/comments/kf9zuv/i_wasted_all_my_money_until_i_started_buying/gg7g65o/'])
+PLTR   m=   191, s=  6058 (post: I wasted all my money until I started buying stocks., comment: ['All been there, decided to double down on PLTR, NIO, XPNG and SPCE all at near all time highs, NIO and PLTR are ab 1-10% gains and the others are negative/break even now, sucks seeing 20-100% gains buying more and getting wiped back to the start', 1, '/r/stocks/comments/kf9zuv/i_wasted_all_my_money_until_i_started_buying/gg7s7qz/'])
+AMD    m=   141, s=  5516 (post: I wasted all my money until I started buying stocks., comment: ["I've had the exact same thought. I've always tried to be money conscious but still wind up buying so many things and it all adds up.\n\nNow I think about things in terms of how many shares of xyz company I could invest it in instead, like that new game is 2 shares SPCE, the new camera I really don't need is 3 shares of AMD, etc... For me it's a really powerful perspective I never had before.", 35, '/r/stocks/comments/kf9zuv/i_wasted_all_my_money_until_i_started_buying/gg79a41/'])
+NIO    m=   130, s=  2178 (post: I wasted all my money until I started buying stocks., comment: ['Complete opposite for me. I never spend money. Like ever. On anything. But then I invested in NIO and saw +60% returns in a matter of just weeks. Then I unloaded a couple thousand into robinhood and bought a slew of stocks and ETF’s. I’ve never spent more than a few hundred dollars on any one thing in my entire life. Until I bought stocks. Now I have as much sitting in the market as I do in my checkings lol', 28, '/r/stocks/comments/kf9zuv/i_wasted_all_my_money_until_i_started_buying/gg7fafb/'])
+ICLN   m=    99, s=  1106 (post: Predict the best performing stock of 2021 and receive a reward., comment: ['I will be cheering with my ICLN bag', 23, '/r/stocks/comments/kgtgh6/predict_the_best_performing_stock_of_2021_and/gghstdg/'])
 
 SELL:

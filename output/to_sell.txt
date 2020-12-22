@@ -1,5 +1,4 @@
-SPCE
-ABNB
-O
-IMO
-APHA
+F
+SQ
+E
+PE

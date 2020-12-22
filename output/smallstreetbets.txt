@@ -1,8 +1,8 @@
 BUY:
-PLTR
-ICLN
-SNDL
-HLT
-NIO
+PLTR   m=    25, s=   530 (post: 💎🖐 PLTR CALL HOLDERS RIGHT NOW, comment: ['💎🖐 PLTR CALL HOLDERS RIGHT NOW', 360, '/r/smallstreetbets/comments/kems0f/pltr_call_holders_right_now/'])
+ICLN   m=    18, s=   114 (post: Clean Energy 2021, comment: ['ICLN', 50, '/r/smallstreetbets/comments/kgeve8/clean_energy_2021/ggebn0c/'])
+HLT    m=    14, s=   394 (post: $100-$10000 In One Day., comment: ['$100-$10000 In One Day.Listen up “Little Buddies”\n\n$HLT will moon tomorrow.\n\nWhy you ask? \n\n⭐️ 98% held by institution. \n\n⭐️ 4% Short Interest \n\n⭐️ Just reached the “One Million Rooms” milestone\n\n🚀 Completed Waldorf Astoria Xiamen \n\nChina is not under lockdown. I repeat: China is NOT UNDER LOCKDOWN. \n\nOnce Nancy Pelosi has her press conference tonight you’ll see. Tomorrow stimulus will be agreed upon and news will hit on Saturday/Sunday\n\nPositions HLT $110 Call Exp December 18th', 159, '/r/smallstreetbets/comments/kf18jr/10010000_in_one_day/'])
+SNDL   m=    14, s=    32 (post: Looking to yolo $300 right now, any suggestions?, comment: ['Buy and hold SNDL.\n\nOnly 50 cents per share and the next positive weed news catalyst will drive the price up.\n\nPosition: Long 1000 shares.', 3, '/r/smallstreetbets/comments/kebd03/looking_to_yolo_300_right_now_any_suggestions/gg1o04o/'])
+HCAC   m=    12, s=   183 (post: Looking to yolo $300 right now, any suggestions?, comment: ['HCAC, trading at $19 and just got a ‘buy’ rating with a target price of $30 from Roth Capital.', 14, '/r/smallstreetbets/comments/kebd03/looking_to_yolo_300_right_now_any_suggestions/gg1qs7j/'])
 
 SELL:

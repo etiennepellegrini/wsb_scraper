@@ -1,18 +1,21 @@
 import argparse
+import pandas as pd
 import praw
 import re
-import pandas as pd
 import config
 
 
 def get_stock_list():
     ticker_dict = {}
     filelist = ["input/list1.csv", "input/list2.csv", "input/list3.csv"]
+    generic_words = ["inc", "group", "company"]
     for file in filelist:
         tl = pd.read_csv(file, skiprows=0, skip_blank_lines=True)
-        tl = tl[tl.columns[0]].tolist()
-        for ticker in tl:
-            ticker_dict[ticker] = 1
+        tickerList = tl[tl.columns[0]].tolist()
+        companyList = tl[tl.columns[1]].tolist()
+        for (ticker, company) in zip(tickerList, companyList):
+            ticker_dict[ticker] = [x for x in company.strip().split(' ')
+                                   if x.lower() not in generic_words]
     return ticker_dict
 
 
@@ -34,13 +37,14 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
     weekly_tickers = {}
 
     # Grab anything that looks like a ticker
-    regex_pattern = r'\b([A-Z]+)\b'
+    regex_pattern = r'\b([A-Z]{1,6})\b'
     ticker_dict = stock_list
     # Read the blacklist and graylist
     blacklist = [x.strip() for x in open('input/blacklist', 'r').readlines()]
     graylist = {}
     for x in open('input/graylist', 'r').readlines():
-        graylist.update({x.split(' ')[0]: x.strip('\n').split(' ')[1:]})
+        entry = x.strip('\n').split(' ')
+        graylist[entry[0]] = entry[1:]
 
     if verbose > 1:
         print(f"Blacklist: {blacklist}")
@@ -51,7 +55,7 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
     # or something else
     for (i, submission) in enumerate(reddit.subreddit(sub).top("week")):
         if verbose > 0:
-            print(f'Processing submission {i} of {nPosts}')
+            print(f'Processing submission {i} of {nPosts}', flush=True)
         if nPosts > 0 and i == nPosts:
             break
 
@@ -83,9 +87,10 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
                         print(f'Not a ticker: {phrase}')
                     continue
                 # If phrase in graylist, see if the keywords are mentioned
-                if phrase in graylist:
-                    if not any([x.lower() in s[0].lower()
-                                for x in graylist[phrase]]):
+                if (phrase in graylist or len(phrase) == 1):
+                    kw = graylist.get(phrase, []) + ticker_dict[phrase]
+                    if not any([' ' + x.lower() + ' ' in s[0].lower()
+                                for x in kw]):
                         if verbose > 1:
                             print(f'Graylisted: {phrase} ; s: {s}')
                         continue
@@ -93,6 +98,9 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
                         if verbose > 1:
                             print(f'Graylist member, mentioned in text:'
                                   f' {phrase} ; s: {s}')
+                            print(f'keywords: {kw}')
+                            print('list: '
+                                  f'{[x.lower() in s[0].lower() for x in kw]}')
 
                 # Reduce string for later printing
                 s[0].replace('\n', ' ')
@@ -174,13 +182,14 @@ def main(
     positions = []
     for sub in subs:
         if verbose > -1:
-            print(f'Retrieving tickers for {sub}')
+            print(f'Retrieving tickers for {sub}', flush=True)
         to_buy = get_tickers(sub, stock_list, prev_tickers, score=score,
                              nPosts=nPosts, top=top, verbose=verbose)
         for stock in to_buy:
             if stock not in positions:
                 positions.append(stock)
 
+    print('💵  🚀  DONE!!  🚀  💵')
     # prev.txt is a global buy list. Could be renamed
     prev = open("output/prev.txt", "w")
     prev.writelines(map(lambda x: x+"\n", positions))

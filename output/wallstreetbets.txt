@@ -1,8 +1,8 @@
 BUY:
-PLTR
-TSLA
-GME
-MT
-F
+PLTR   m=   596, s= 51168 (post: Cramer to the 🚀🚀🚀🚀, comment: ['Can someone please explain to me how what Cramer said is true? I’m relatively new to the sub and the only investing plays I read on here is “$PLTR stonks” and “$TSLA yolo for stonks” like wtf that’s just peak autism what is Cramer talking about', 1, '/r/wallstreetbets/comments/kdruj3/cramer_to_the/gfzgtoy/'])
+TSLA   m=   347, s=110252 (post: Cramer to the 🚀🚀🚀🚀, comment: ['$TSLA 69 puts $420 calls exp fucking right now!', 85, '/r/wallstreetbets/comments/kdruj3/cramer_to_the/gfya4kl/'])
+GME    m=   341, s= 18060 (post: Cramer to the 🚀🚀🚀🚀, comment: ["someone explain to him that over 70 percent of people who read the GME DD that specifically said buy STOCKS and they bought weekly fds instead at the very top and lost every penny. Then the remaining 29 percent bought stocks at the top and then paperhanded them within 48 hours when the DD was Q4.\n\nThere's no genius level shit happening here. It's a bunch of absolute idiots and a handful of super smart fun guys.\n\nThat said, any random one of you is smarter than the total combined brainpower of r/stocks so there is that.", 11, '/r/wallstreetbets/comments/kdruj3/cramer_to_the/gfzdxf8/'])
+MT     m=   158, s=  5549 (post: Cramer to the 🚀🚀🚀🚀, comment: ['All I know is $MT to the fucking MOON', 1, '/r/wallstreetbets/comments/kdruj3/cramer_to_the/gg08dq0/'])
+AMD    m=    51, s=  1790 (post: When your friends and family call you crazy for going all in on $TSLA at the beginning of the year., comment: ['AMD gang fam.', 3, '/r/wallstreetbets/comments/kf9gtf/when_your_friends_and_family_call_you_crazy_for/gg7tdlq/'])
 
 SELL:
