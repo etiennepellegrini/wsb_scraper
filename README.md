@@ -26,4 +26,9 @@ main: central python script
     - `pip install pandas`
 
 - Run & profit :moneybag: :rocket:
-    - `python main,py`
+    - `python main,py [options]`
+    or
+    - `./run_wsb_scraper.sh [options]`
+    The second option activates the `venv` for you
+
+Use `./run_wsb_scraper.sh -h` to see the available options and their defaults.

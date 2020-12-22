@@ -36,17 +36,29 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
     # Grab anything that looks like a ticker
     regex_pattern = r'\b([A-Z]+)\b'
     ticker_dict = stock_list
-    # Read the blacklist
+    # Read the blacklist and graylist
     blacklist = [x.strip() for x in open('input/blacklist', 'r').readlines()]
+    graylist = {}
+    for x in open('input/graylist', 'r').readlines():
+        graylist.update({x.split(' ')[0]: x.strip('\n').split(' ')[1:]})
 
     if verbose > 1:
-        print(f'Blacklist: {blacklist}')
+        print(f"Blacklist: {blacklist}")
+        print(f"Graylist: {graylist}")
+
+    # Go through top submissions of the week
+    # ATN-2020-12-21: TODO: Make this an input - could want the top of the day
+    # or something else
     for (i, submission) in enumerate(reddit.subreddit(sub).top("week")):
         if verbose > 0:
             print(f'Processing submission {i} of {nPosts}')
         if nPosts > 0 and i == nPosts:
             break
-        strings = [[submission.title, submission.score, submission.permalink]]
+
+        # Store title + body, score, and link
+        strings = [[submission.title + submission.selftext,
+                    submission.score, submission.permalink]]
+
         # This removes all the second and below level comments
         # ATN-2020-12-21: TODO: Is this really what you want?
         submission.comments.replace_more(limit=0)
@@ -56,9 +68,10 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
             # Keep the body, score, and link
             strings.append([comment.body, comment.score, comment.permalink])
 
-        # Go through all the 'bodies'
+        # Go through all the strings
         for s in strings:
             for phrase in re.findall(regex_pattern, s[0]):
+
                 # If blacklisted, move on
                 if phrase in blacklist:
                     if verbose > 1:
@@ -69,6 +82,17 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
                     if verbose > 1:
                         print(f'Not a ticker: {phrase}')
                     continue
+                # If phrase in graylist, see if the keywords are mentioned
+                if phrase in graylist:
+                    if not any([x.lower() in s[0].lower()
+                                for x in graylist[phrase]]):
+                        if verbose > 1:
+                            print(f'Graylisted: {phrase} ; s: {s}')
+                        continue
+                    else:
+                        if verbose > 1:
+                            print(f'Graylist member, mentioned in text:'
+                                  f' {phrase} ; s: {s}')
 
                 # Reduce string for later printing
                 s[0].replace('\n', ' ')
@@ -83,7 +107,7 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
                     weekly_tickers[phrase][1] += s[1]
                 if verbose > 1:
                     print(f'Found ticker {phrase} for the'
-                          ' {weekly_tickers[phrase][0]}th time, {s}')
+                          f' {weekly_tickers[phrase][0]}th time, {s}')
                     print(f'Current {phrase} scores: ',
                           weekly_tickers[phrase][0:2])
 
@@ -149,8 +173,8 @@ def main(
     stock_list = get_stock_list()
     positions = []
     for sub in subs:
-        print(f'Retrieving tickers for {sub}')
-        # print(sub, stock_list, prev_tickers, score, nPosts, verbose)
+        if verbose > -1:
+            print(f'Retrieving tickers for {sub}')
         to_buy = get_tickers(sub, stock_list, prev_tickers, score=score,
                              nPosts=nPosts, top=top, verbose=verbose)
         for stock in to_buy:
@@ -185,8 +209,9 @@ if __name__ == '__main__':
                         action='extend', help='Replace list of subs to scrape'
                         ' (default: wsb, stocks, investing, ssb)', default=[])
     parser.add_argument('-v', '--verbose', type=int, nargs='?',
-                        help='Different levels of debug output. Default: 0',
-                        default=0, const=1, dest='verbose')
+                        help='Different levels of debug output. Default: 0'
+                        ' -1 for complete silence', default=0, const=1,
+                        dest='verbose')
 
     # Read and convert input arguments
     args = parser.parse_args()
