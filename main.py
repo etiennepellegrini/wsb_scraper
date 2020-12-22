@@ -7,6 +7,12 @@ import praw
 import re
 import sys
 
+enchanted = True
+try:
+    import enchant
+except:
+    print('Enchant could not be imported')
+    enchanted = False
 
 def get_stock_list(inputDir):
     ticker_dict = {}
@@ -57,6 +63,8 @@ def get_tickers(sub, stock_list, prev_tickers, metric='m', nPosts=-1,
         user_agent=config.api_user_agent,
     )
     weekly_tickers = {}
+    if enchanted:
+        englishDict = enchant.Dict("en_US")
 
     # Grab anything that looks like a ticker
     regex_pattern = r'\b([A-Z]{1,6})\b'
@@ -112,8 +120,11 @@ def get_tickers(sub, stock_list, prev_tickers, metric='m', nPosts=-1,
                     if verbose > 1:
                         print(f'Not a ticker: {phrase}')
                     continue
+
                 # If phrase in graylist, see if the keywords are mentioned
-                if (phrase in graylist or len(phrase) == 1):
+                if (phrase in graylist
+                        or len(phrase) == 1
+                        or (enchanted and englishDict.check(phrase))):
                     # The graylist has precedence
                     kw = graylist.get(phrase, [])
                     if len(kw) == 0:

@@ -24,6 +24,12 @@ source wsb_scraper_venv/bin/activate
 pip install praw
 pip install pandas
 ```
+    - On a Mac, if `brew` is installed, and you'd like to weed out English
+        words:
+    ```bash
+    brew install enchant
+    pip install pyenchant
+    ```
 
 ## Run & profit :moneybag: :rocket:
 
