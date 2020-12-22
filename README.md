@@ -12,6 +12,8 @@ main: central python script
 
 # Instructions
 
+## Usage
+
 - Create login info:
     - Copy the `config_template.py` to `config,py`
     - Follow the intructions to retrieve an `api_id` and `api_secret` ; update
@@ -36,3 +38,19 @@ pip install pandas
     - The second option activates the `venv` for you
 
 Use `./run_wsb_scraper.sh -h` to see the available options and their defaults.
+
+## Inputs
+
+### Graylist
+
+List ambiguous tickers, and the keywords to check for in the body of the posts
+(comma-separated list)
+
+### Blacklist
+
+List strings that are automatically excluded (for some strings like `WSB`,
+graylisting them would waste time when probability of actual ticker is very low)
+
+### generic
+
+Contains list of words too generic to act as keywords

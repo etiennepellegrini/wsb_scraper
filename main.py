@@ -1,21 +1,34 @@
 import argparse
+import config
 import pandas as pd
 import praw
 import re
-import config
+import sys
 
 
 def get_stock_list():
     ticker_dict = {}
     filelist = ["input/list1.csv", "input/list2.csv", "input/list3.csv"]
-    generic_words = ["inc", "group", "company"]
+
+    generic_words = [x.strip() for x in open('input/generic', 'r').readlines()]
     for file in filelist:
         tl = pd.read_csv(file, skiprows=0, skip_blank_lines=True)
         tickerList = tl[tl.columns[0]].tolist()
         companyList = tl[tl.columns[1]].tolist()
         for (ticker, company) in zip(tickerList, companyList):
-            ticker_dict[ticker] = [x for x in company.strip().split(' ')
-                                   if x.lower() not in generic_words]
+            # First, try to isolate > 3 char words
+            ticker_dict[ticker] = [
+                x for x in company.strip().split(' ')
+                if x.lower() not in generic_words and len(x.lower()) > 3
+            ]
+
+            # If there isn't any, accept all
+            if len(ticker_dict[ticker]) == 0:
+                ticker_dict[ticker] = [
+                    x for x in company.strip().split(' ')
+                    if x.lower() not in generic_words
+                ]
+
     return ticker_dict
 
 
@@ -43,8 +56,10 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
     blacklist = [x.strip() for x in open('input/blacklist', 'r').readlines()]
     graylist = {}
     for x in open('input/graylist', 'r').readlines():
-        entry = x.strip('\n').split(' ')
-        graylist[entry[0]] = entry[1:]
+        entry = x.strip('\n').split(' ', maxsplit=1)
+        graylist[entry[0]] = []
+        if len(entry) > 1:
+            graylist[entry[0]] = [s.strip() for s in entry[1].split(',')]
 
     if verbose > 1:
         print(f"Blacklist: {blacklist}")
@@ -88,14 +103,18 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
                     continue
                 # If phrase in graylist, see if the keywords are mentioned
                 if (phrase in graylist or len(phrase) == 1):
-                    kw = graylist.get(phrase, []) + ticker_dict[phrase]
-                    if not any([' ' + x.lower() + ' ' in s[0].lower()
+                    # The graylist has precedence
+                    kw = graylist.get(phrase, [])
+                    if len(kw) == 0:
+                        kw = ticker_dict[phrase]
+                    # Check whether any of the
+                    if not any([f' {x.lower()} ' in f' {s[0].lower()} '
                                 for x in kw]):
                         if verbose > 1:
                             print(f'Graylisted: {phrase} ; s: {s}')
                         continue
                     else:
-                        if verbose > 1:
+                        if verbose > -1:
                             print(f'Graylist member, mentioned in text:'
                                   f' {phrase} ; s: {s}')
                             print(f'keywords: {kw}')
@@ -155,7 +174,7 @@ def write_to_file(subName, top_tickers, all_tickers):
             f.writelines(
                 map(
                     lambda x: f"{x[0]:4s}   m={x[1][0]:6d}, s={x[1][1]:6d}"
-                            f" (post: {x[1][2]}, comment: {x[1][3]})\n",
+                              f" (post: {x[1][2]}, comment: {x[1][3]})\n",
                     tickers.items()
                 ),
             )
