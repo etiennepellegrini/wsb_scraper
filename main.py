@@ -134,32 +134,31 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
     if verbose > 0:
         print(f'Top tickers: {top_tickers}')
 
-    to_buy = top_tickers
-    to_sell = []
-
     # Removed from upstream: - per-ub sell list ; not buying items that were
     # already on the buy list
 
     # Write sub-specific file
     write_to_file(
-        'output/' + sub+'.txt',
-        map(
-            lambda x: f"{x[0]:4s}   m={x[1][0]:6d}, s={x[1][1]:6d}"
-                      f" (post: {x[1][2]}, comment: {x[1][3]})\n",
-            to_buy.items()
-        ),
-        map(lambda x: x+"\n", to_sell)
+        sub,
+        top_tickers,
+        weekly_tickers
     )
-    return to_buy
+    return top_tickers
 
 
-def write_to_file(file, to_buy, to_sell):
-    f = open(file, "w")
-    f.write("BUY:\n")
-    f.writelines(to_buy)
-    f.write("\nSELL:\n")
-    f.writelines(to_sell)
-    f.close()
+def write_to_file(subName, top_tickers, all_tickers):
+
+    # Write top & keep all stats as well
+    for (tickers, suffix) in zip([top_tickers, all_tickers], ['', '_all']):
+        with open(f'output/{subName}{suffix}.txt', "w") as f:
+            f.write("BUY:\n")
+            f.writelines(
+                map(
+                    lambda x: f"{x[0]:4s}   m={x[1][0]:6d}, s={x[1][1]:6d}"
+                            f" (post: {x[1][2]}, comment: {x[1][3]})\n",
+                    tickers.items()
+                ),
+            )
 
 
 def main(
