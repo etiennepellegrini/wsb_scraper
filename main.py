@@ -1,16 +1,21 @@
 import argparse
 import config
+import os
 import pandas as pd
 import praw
 import re
 import sys
 
 
-def get_stock_list():
+def get_stock_list(inputDir):
     ticker_dict = {}
-    filelist = ["input/list1.csv", "input/list2.csv", "input/list3.csv"]
+    filelist = [
+        f"{inputDir}/{f}" for f in ["list1.csv", "list2.csv", "list3.csv"]
+    ]
 
-    generic_words = [x.strip() for x in open('input/generic', 'r').readlines()]
+    generic_words = [
+        x.strip() for x in open(f'{inputDir}/generic', 'r').readlines()
+    ]
     for file in filelist:
         tl = pd.read_csv(file, skiprows=0, skip_blank_lines=True)
         tickerList = tl[tl.columns[0]].tolist()
@@ -32,16 +37,16 @@ def get_stock_list():
     return ticker_dict
 
 
-def get_prev_tickers():
-    prev = open("output/prev.txt", "r")
-    prev_tickers = prev.readlines()
-    prev_tickers = [x.strip() for x in prev_tickers]
-    prev.close()
+def get_prev_tickers(filename):
+    with open(f"{filename}", "r") as prev:
+        prev_tickers = prev.readlines()
+        prev_tickers = [x.strip() for x in prev_tickers]
     return prev_tickers
 
 
 def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
-                top=5, verbose=0):
+                top=5, time='week', inputDir='./input', outputDir='./output',
+                verbose=0):
     reddit = praw.Reddit(
         client_id=config.api_id,
         client_secret=config.api_secret,
@@ -53,9 +58,11 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
     regex_pattern = r'\b([A-Z]{1,6})\b'
     ticker_dict = stock_list
     # Read the blacklist and graylist
-    blacklist = [x.strip() for x in open('input/blacklist', 'r').readlines()]
+    blacklist = [
+        x.strip() for x in open(f'{inputDir}/blacklist', 'r').readlines()
+    ]
     graylist = {}
-    for x in open('input/graylist', 'r').readlines():
+    for x in open(f'{inputDir}/graylist', 'r').readlines():
         entry = x.strip('\n').split(' ', maxsplit=1)
         graylist[entry[0]] = []
         if len(entry) > 1:
@@ -68,7 +75,7 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
     # Go through top submissions of the week
     # ATN-2020-12-21: TODO: Make this an input - could want the top of the day
     # or something else
-    for (i, submission) in enumerate(reddit.subreddit(sub).top("week")):
+    for (i, submission) in enumerate(reddit.subreddit(sub).top(f"{time}")):
         if verbose > 0:
             print(f'Processing submission {i} of {nPosts}', flush=True)
         if nPosts > 0 and i == nPosts:
@@ -114,7 +121,7 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
                             print(f'Graylisted: {phrase} ; s: {s}')
                         continue
                     else:
-                        if verbose > -1:
+                        if verbose > 1:
                             print(f'Graylist member, mentioned in text:'
                                   f' {phrase} ; s: {s}')
                             print(f'keywords: {kw}')
@@ -127,7 +134,7 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
                 # New ticker
                 if phrase not in weekly_tickers.keys():
                     if verbose > 0:
-                        print(f'New ticker found: {phrase}, s={[1]}')
+                        print(f'New ticker found: {phrase}, s={s[1]}')
                     weekly_tickers[phrase] = [1, s[1], submission.title, s]
                 else:
                     weekly_tickers[phrase][0] += 1
@@ -146,30 +153,44 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
         scoreIndex = 1
     else:
         scoreIndex = 0
-    top_tickers = dict(sorted(weekly_tickers.items(),
-                              key=lambda x: x[1][scoreIndex],
-                              reverse=True)[:min(top, len(weekly_tickers))])
+    weekly_tickers = dict(
+        sorted(weekly_tickers.items(), key=lambda x: x[1][scoreIndex],
+               reverse=True)
+    )
+    top_tickers = dict(
+        sorted(weekly_tickers.items(), key=lambda x: x[1][scoreIndex],
+               reverse=True)[0:min(top, len(weekly_tickers))]
+    )
 
     if verbose > 0:
-        print(f'Top tickers: {top_tickers}')
+        print(f'Top tickers: {top_tickers.keys()}')
 
     # Removed from upstream: - per-ub sell list ; not buying items that were
     # already on the buy list
 
     # Write sub-specific file
     write_to_file(
-        sub,
-        top_tickers,
-        weekly_tickers
+        [f'{outputDir}/{sub}{suf}.txt' for suf in ['', '_all']],
+        [top_tickers, weekly_tickers],
     )
     return top_tickers
 
 
-def write_to_file(subName, top_tickers, all_tickers):
+def write_to_file(filenames, ticker_dicts):
+
+    if isinstance(ticker_dicts, dict):
+        ticker_dicts = [ticker_dicts]
+
+    if isinstance(filenames, str):
+        filenames = [filenames]
+
+    if len(filenames) != len(ticker_dicts):
+        raise Exception(f'Input Error: filenames has len {len(filenames)},'
+                        f' ticker_dicts has len {len(ticker_dicts)}.')
 
     # Write top & keep all stats as well
-    for (tickers, suffix) in zip([top_tickers, all_tickers], ['', '_all']):
-        with open(f'output/{subName}{suffix}.txt', "w") as f:
+    for (tickers, filename) in zip(ticker_dicts, filenames):
+        with open(filename, "w") as f:
             f.write("BUY:\n")
             f.writelines(
                 map(
@@ -185,6 +206,10 @@ def main(
     top=5,
     score=True,
     subs=["wallstreetbets", "stocks", "investing", "smallstreetbets"],
+    time='week',
+    prevFile='./input/to_buy_prev.txt',
+    inputDir='./input',
+    outputDir='./output',
     verbose=0,
 ):
     """ Main routine for the wsb_scraper.
@@ -195,30 +220,42 @@ def main(
     subs       [str]: List of subs to scrape
     verbose    int: Output level. Default: 0
     """
-    prev_tickers = get_prev_tickers()
-    stock_list = get_stock_list()
-    positions = []
+    # Make output dir
+    print(outputDir)
+    if not os.path.isdir(f'{outputDir}'):
+        os.makedirs(outputDir)
+    prev_tickers = get_prev_tickers(prevFile)
+    stock_list = get_stock_list(inputDir)
+    positions = {}
     for sub in subs:
         if verbose > -1:
             print(f'Retrieving tickers for {sub}', flush=True)
         to_buy = get_tickers(sub, stock_list, prev_tickers, score=score,
-                             nPosts=nPosts, top=top, verbose=verbose)
+                             nPosts=nPosts, top=top, time=time,
+                             inputDir=inputDir, outputDir=outputDir,
+                             verbose=verbose)
         for stock in to_buy:
             if stock not in positions:
-                positions.append(stock)
+                positions[stock] = to_buy[stock]
 
     print('💵  🚀  DONE!!  🚀  💵')
-    # prev.txt is a global buy list. Could be renamed
-    prev = open("output/prev.txt", "w")
-    prev.writelines(map(lambda x: x+"\n", positions))
-    prev.close()
+
+    # --- Write global buy list
+    if score:
+        scoreIndex = 1
+    else:
+        scoreIndex = 0
+    positions = dict(sorted(positions.items(),
+                            key=lambda x: x[1][scoreIndex],
+                            reverse=True))
+    write_to_file(f"{outputDir}/to_buy.txt", positions)
 
     # The sell list should be computed here, once all subs are processed
     to_sell = []
     for ticker in prev_tickers:
         if ticker not in positions:
             to_sell.append(ticker)
-    sell = open("output/to_sell.txt", "w")
+    sell = open(f"{outputDir}/to_sell.txt", "w")
     sell.writelines(map(lambda x: x+"\n", to_sell))
     sell.close()
 
@@ -235,6 +272,17 @@ if __name__ == '__main__':
     parser.add_argument('--subs', type=str, nargs='*', metavar="SUB",
                         action='extend', help='Replace list of subs to scrape'
                         ' (default: wsb, stocks, investing, ssb)', default=[])
+    parser.add_argument('-ti', '--time', type=str, nargs='?', help='Time filter'
+                        ' for top posts. Can be one of: all, day, hour, month,'
+                        ' week, year (default: week).', default='week')
+    parser.add_argument('-p', '--prev', type=str, nargs='?', help='File'
+                        ' to use as previous buy list. Default:'
+                        ' ./input/to_buy_prev.txt',
+                        default='./input/to_buy_prev.txt')
+    parser.add_argument('-i', '--input', type=str, nargs='?', help='Input'
+                        ' directory. Default: ./input', default='./input')
+    parser.add_argument('-o', '--output', type=str, nargs='?', help='Output'
+                        ' directory. Default: ./output', default='./output')
     parser.add_argument('-v', '--verbose', type=int, nargs='?',
                         help='Different levels of debug output. Default: 0'
                         ' -1 for complete silence', default=0, const=1,
@@ -250,5 +298,9 @@ if __name__ == '__main__':
         top=args.top,
         score=args.score,
         subs=args.subs,
+        time=args.time,
+        prevFile=args.prev,
+        inputDir=args.input,
+        outputDir=args.output,
         verbose=args.verbose,
     )

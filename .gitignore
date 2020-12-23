@@ -6,3 +6,6 @@ __pycache__
 
 # Virtual env
 wsb_scraper_venv
+
+# Output
+output/*/
