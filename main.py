@@ -38,9 +38,13 @@ def get_stock_list(inputDir):
 
 
 def get_prev_tickers(filename):
-    with open(f"{filename}", "r") as prev:
-        prev_tickers = prev.readlines()
-        prev_tickers = [x.strip() for x in prev_tickers]
+    try:
+        with open(f"{filename}", "r") as prev:
+            prev_tickers = prev.readlines()
+            prev_tickers = [x.strip() for x in prev_tickers]
+    except:
+        prev_tickers = []
+
     return prev_tickers
 
 
