@@ -139,6 +139,7 @@ def get_tickers(sub, stock_list, prev_tickers, metric='m', nPosts=-1,
                 newTicker = {
                     'm': 1,
                     's': s[1],
+                    'sub': sub,
                     'topSubmission': {
                         'sub': sub,
                         'title': submission.title,
@@ -212,9 +213,11 @@ def add_ticker(destDict, tickerDict, verbose=0):
 
     else:
         # Add mentions
-        destDict[ticker]['m'] += tickerDict['m']
+        destDict[ticker]['score']['m']['tot'] += tickerDict['m']
+        destDict[ticker]['score']['m'][tickerDict['sub']] = tickerDict['m']
         # Add score
-        destDict[ticker]['s'] += tickerDict['s']
+        destDict[ticker]['score']['s']['tot'] += tickerDict['s']
+        destDict[ticker]['score']['s'][tickerDict['sub']] = tickerDict['s']
 
         # Keep highest score submission
         if (destDict[ticker]['topSubmission']['s']
