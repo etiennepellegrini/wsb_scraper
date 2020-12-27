@@ -38,17 +38,17 @@ def get_stock_list(inputDir):
 
 
 def get_prev_tickers(filename):
-    try:
+    if os.path.isfile(filename):
         with open(f"{filename}", "r") as prev:
             prev_tickers = prev.readlines()
             prev_tickers = [x.strip() for x in prev_tickers]
-    except:
+    else:
         prev_tickers = []
 
     return prev_tickers
 
 
-def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
+def get_tickers(sub, stock_list, prev_tickers, scoreIndex=0, nPosts=-1,
                 top=5, time='week', inputDir='./input', outputDir='./output',
                 verbose=0):
     reddit = praw.Reddit(
@@ -134,15 +134,17 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
 
                 # Reduce string for later printing
                 s[0].replace('\n', ' ')
+                newTicker = [1, s[1], submission.title, s]
 
                 # New ticker
                 if phrase not in weekly_tickers.keys():
                     if verbose > 0:
                         print(f'New ticker found: {phrase}, s={s[1]}')
-                    weekly_tickers[phrase] = [1, s[1], submission.title, s]
+                    weekly_tickers[phrase] = newTicker
                 else:
-                    weekly_tickers[phrase][0] += 1
-                    weekly_tickers[phrase][1] += s[1]
+                    weekly_tickers[phrase] = combine_score(
+                        weekly_tickers[phrase], newTicker
+                    )
                 if verbose > 1:
                     print(f'Found ticker {phrase} for the'
                           f' {weekly_tickers[phrase][0]}th time, {s}')
@@ -153,10 +155,6 @@ def get_tickers(sub, stock_list, prev_tickers, score=True, nPosts=-1,
         print(f'Weekly tickers: {weekly_tickers}')
 
     # Rank the results depending on mentions or score
-    if score:
-        scoreIndex = 1
-    else:
-        scoreIndex = 0
     weekly_tickers = dict(
         sorted(weekly_tickers.items(), key=lambda x: x[1][scoreIndex],
                reverse=True)
@@ -205,6 +203,20 @@ def write_to_file(filenames, ticker_dicts):
             )
 
 
+def combine_score(dest, targ):
+
+    # Increase mention count
+    dest[0] += targ[0]
+    # Add score
+    dest[1] += targ[1]
+
+    # Keep highest score submission
+    if dest[2][1] < targ[2][1]:
+        dest[2] = targ[2]
+
+    return dest
+
+
 def main(
     nPosts=-1,
     top=5,
@@ -224,31 +236,41 @@ def main(
     subs       [str]: List of subs to scrape
     verbose    int: Output level. Default: 0
     """
+    # --- Set runs up
     # Make output dir
     print(outputDir)
     if not os.path.isdir(f'{outputDir}'):
         os.makedirs(outputDir)
     prev_tickers = get_prev_tickers(prevFile)
     stock_list = get_stock_list(inputDir)
-    positions = {}
-    for sub in subs:
-        if verbose > -1:
-            print(f'Retrieving tickers for {sub}', flush=True)
-        to_buy = get_tickers(sub, stock_list, prev_tickers, score=score,
-                             nPosts=nPosts, top=top, time=time,
-                             inputDir=inputDir, outputDir=outputDir,
-                             verbose=verbose)
-        for stock in to_buy:
-            if stock not in positions:
-                positions[stock] = to_buy[stock]
-
-    print('💵  🚀  DONE!!  🚀  💵')
-
-    # --- Write global buy list
+    # Set scoring system
     if score:
         scoreIndex = 1
     else:
         scoreIndex = 0
+
+    # --- Go through each sub
+    positions = {}
+    for sub in subs:
+        if verbose > -1:
+            print(f'Retrieving tickers for {sub}', flush=True)
+        to_buy = get_tickers(sub, stock_list, prev_tickers, scoreIndex=score,
+                             nPosts=nPosts, top=top, time=time,
+                             inputDir=inputDir, outputDir=outputDir,
+                             verbose=verbose)
+
+        # Add to the running list
+        for stock in to_buy:
+            if stock not in positions:
+                positions[stock] = to_buy[stock]
+            else:
+                positions[stock] = combine_score(
+                    positions[stock], to_buy[stock]
+                )
+
+    print('💵  🚀  DONE!!  🚀  💵')
+
+    # --- Write global buy list
     positions = dict(sorted(positions.items(),
                             key=lambda x: x[1][scoreIndex],
                             reverse=True))
@@ -276,9 +298,9 @@ if __name__ == '__main__':
     parser.add_argument('--subs', type=str, nargs='*', metavar="SUB",
                         action='extend', help='Replace list of subs to scrape'
                         ' (default: wsb, stocks, investing, ssb)', default=[])
-    parser.add_argument('-ti', '--time', type=str, nargs='?', help='Time filter'
-                        ' for top posts. Can be one of: all, day, hour, month,'
-                        ' week, year (default: week).', default='week')
+    parser.add_argument('-ti', '--time', type=str, nargs='?', help='Time'
+                        ' filter for top posts. Can be one of: all, day, hour,'
+                        ' month, week, year (default: week).', default='week')
     parser.add_argument('-p', '--prev', type=str, nargs='?', help='File'
                         ' to use as previous buy list. Default:'
                         ' ./input/to_buy_prev.txt',
