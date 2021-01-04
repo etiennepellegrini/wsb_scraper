@@ -1,9 +1,10 @@
 additionalArgs="$@"
 
 # --- Run all scenarios
-today=$(date '+%Y%m%d')
+today=$(date '+%Y%m%dT%H%M')
 yday=$(date -d '-1 day' '+%Y%m%d')
-
+ydayDir=$(ls -td output/${yday}*/ | head -1)
+echo "ydayDir: $ydayDir"
 
 for scoreType in {mentions,score}; do
 
@@ -19,9 +20,8 @@ for scoreType in {mentions,score}; do
         ./run_wsb_scraper.sh \
             ${scoreFlag} \
             --time "${timePeriod}" \
-            --top 10 \
             --output "output/${today}/${scoreType}/${timePeriod}" \
-            --prev "output/${yday}/${scoreType}/${timePeriod}/to_buy.txt" \
+            --prev "${ydayDir}/${scoreType}/${timePeriod}/to_buy.txt" \
             ${additionalArgs}"
         echo $cmd
         eval $cmd

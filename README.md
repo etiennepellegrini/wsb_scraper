@@ -1,18 +1,12 @@
 # wsb_scraper
-scrapes WSB for top 5 stocks each week. Keeps track of previous week's top 5. If a stock stays in the top 5, we hold, If it leaves the top 5, we sell. If a stock enters the top 5, we buy.
-
-
-Files:
-
-list1.csv, list2.csv, list3.csv: CSV files for list of tickers
-
-prev: previous week's top 5 stocks
-
-main: central python script
+Scrapes WSB and other investing subreddits for top stocks each week, by mentions
+or score.
 
 # Instructions
 
-## Usage
+## Installation
+
+- Clone this repo wherever you'd like.
 
 - Create login info:
     - Copy the `config_template.py` to `config,py`
@@ -31,15 +25,33 @@ pip install praw
 pip install pandas
 ```
 
-- Run & profit :moneybag: :rocket:
+## Run & profit :moneybag: :rocket:
+
+- Use `./run_wsb_scraper.sh -h` to see the available options and their defaults.
+
+- Single run:
     - `python main,py [options] > scraper.log 2>&1 &`
     or
     - `./run_wsb_scraper.sh [options] > scraper.log 2>&1 &`
-    - The second option activates the `venv` for you
+        - ==> activates the `venv` for you
 
-Use `./run_wsb_scraper.sh -h` to see the available options and their defaults.
+- Multi-run / historical data:
+    - `runAll.sh` starts 6 runs: day, week, month, for both scores and mentions,
+        and saves the output to `output/<date>`
+    - By default, `runAll.sh`:
+        - tries to load
+            `output/<yesterday>/<mention|score>/<day|week|month>/to_buy.txt`
+            as the previous buy list
+    - All the other options (at their default) can be overwritten from the
+        command line
+    
+```bash
+./runAll.sh [options] > runAll_$(date +"%Y%m%dT%H%M").log 2>&1 &
+```
 
-## Inputs
+# "Doc"
+
+## Input Files
 
 ### Graylist
 
@@ -53,4 +65,18 @@ graylisting them would waste time when probability of actual ticker is very low)
 
 ### generic
 
-Contains list of words too generic to act as keywords
+Contains list of words too generic to act as keywords when checking the graylist
+
+## Output Files
+
+### [subName].txt
+
+Contains the top `n` (default 5) tickers for the specified sub
+
+### to_buy.txt
+
+Contains the merged list from all considered subs
+
+### to_sell.txt
+
+Messed up at the moment. Should contain tickers that dropped in mentions
