@@ -1,5 +1,6 @@
 import argparse
 import config
+import json
 import os
 import pandas as pd
 import praw
@@ -40,15 +41,14 @@ def get_stock_list(inputDir):
 def get_prev_tickers(filename):
     if os.path.isfile(filename):
         with open(f"{filename}", "r") as prev:
-            prev_tickers = prev.readlines()
-            prev_tickers = [x.strip() for x in prev_tickers]
+            prev_tickers = json.load(prev)
     else:
         prev_tickers = []
 
     return prev_tickers
 
 
-def get_tickers(sub, stock_list, prev_tickers, scoreIndex=0, nPosts=-1,
+def get_tickers(sub, stock_list, prev_tickers, metric='m', nPosts=-1,
                 top=5, time='week', inputDir='./input', outputDir='./output',
                 verbose=0):
     reddit = praw.Reddit(
@@ -134,33 +134,33 @@ def get_tickers(sub, stock_list, prev_tickers, scoreIndex=0, nPosts=-1,
 
                 # Reduce string for later printing
                 s[0].replace('\n', ' ')
-                newTicker = [1, s[1], submission.title, s]
 
                 # New ticker
-                if phrase not in weekly_tickers.keys():
-                    if verbose > 0:
-                        print(f'New ticker found: {phrase}, s={s[1]}')
-                    weekly_tickers[phrase] = newTicker
-                else:
-                    weekly_tickers[phrase] = combine_score(
-                        weekly_tickers[phrase], newTicker
-                    )
-                if verbose > 1:
-                    print(f'Found ticker {phrase} for the'
-                          f' {weekly_tickers[phrase][0]}th time, {s}')
-                    print(f'Current {phrase} scores: ',
-                          weekly_tickers[phrase][0:2])
+                newTicker = {
+                    'm': 1,
+                    's': s[1],
+                    'topSubmission': {
+                        'sub': sub,
+                        'title': submission.title,
+                        's': s[1],
+                        'link': s[2],
+                        'text': s[0]
+                    },
+                    'name': phrase
+                }
+                add_ticker(weekly_tickers, newTicker, verbose)
 
     if verbose > 1:
         print(f'Weekly tickers: {weekly_tickers}')
 
-    # Rank the results depending on mentions or score
+    # Rank the results depending on mentions or score. We look into x[1]
+    # because x is the tuple (key, value)
     weekly_tickers = dict(
-        sorted(weekly_tickers.items(), key=lambda x: x[1][scoreIndex],
+        sorted(weekly_tickers.items(), key=lambda x: x[1][metric],
                reverse=True)
     )
     top_tickers = dict(
-        sorted(weekly_tickers.items(), key=lambda x: x[1][scoreIndex],
+        sorted(weekly_tickers.items(), key=lambda x: x[1][metric],
                reverse=True)[0:min(top, len(weekly_tickers))]
     )
 
@@ -193,28 +193,38 @@ def write_to_file(filenames, ticker_dicts):
     # Write top & keep all stats as well
     for (tickers, filename) in zip(ticker_dicts, filenames):
         with open(filename, "w") as f:
-            f.write("BUY:\n")
-            f.writelines(
-                map(
-                    lambda x: f"{x[0]:4s}   m={x[1][0]:6d}, s={x[1][1]:6d}"
-                              f" (post: {x[1][2]}, comment: {x[1][3]})\n",
-                    tickers.items()
-                ),
-            )
+            json.dump(tickers, f, indent=2, sort_keys=False)
+            # f.write("BUY:\n")
+            # f.writelines(
+                # map(
+                    # lambda x: f"{x[0]:4s}   m={x[1][0]:6d}, s={x[1][1]:6d}"
+                              # f" (post: {x[1][2]}, comment: {x[1][3]})\n",
+                    # tickers.items()
+                # ),
+            # )
 
 
-def combine_score(dest, targ):
+def add_ticker(destDict, tickerDict, verbose=0):
 
-    # Increase mention count
-    dest[0] += targ[0]
-    # Add score
-    dest[1] += targ[1]
+    ticker = tickerDict['name']
+    if ticker not in destDict:
+        destDict[ticker] = tickerDict
 
-    # Keep highest score submission
-    if dest[2][1] < targ[2][1]:
-        dest[2] = targ[2]
+    else:
+        # Add mentions
+        destDict[ticker]['m'] += tickerDict['m']
+        # Add score
+        destDict[ticker]['s'] += tickerDict['s']
 
-    return dest
+        # Keep highest score submission
+        if (destDict[ticker]['topSubmission']['s']
+                < tickerDict['topSubmission']['s']):
+            destDict[ticker]['topSubmission'] = tickerDict['topSubmission']
+
+        if verbose > 1:
+            print(f"Found ticker {ticker} for the"
+                    f" {destDict[ticker]['s']}th time"
+                    f"{tickerDict['topSubmission']}")
 
 
 def main(
@@ -245,34 +255,29 @@ def main(
     stock_list = get_stock_list(inputDir)
     # Set scoring system
     if score:
-        scoreIndex = 1
+        metric = 's'
     else:
-        scoreIndex = 0
+        metric = 'm'
 
     # --- Go through each sub
     positions = {}
     for sub in subs:
         if verbose > -1:
             print(f'Retrieving tickers for {sub}', flush=True)
-        to_buy = get_tickers(sub, stock_list, prev_tickers, scoreIndex=score,
+        to_buy = get_tickers(sub, stock_list, prev_tickers, metric=metric,
                              nPosts=nPosts, top=top, time=time,
                              inputDir=inputDir, outputDir=outputDir,
                              verbose=verbose)
 
         # Add to the running list
         for stock in to_buy:
-            if stock not in positions:
-                positions[stock] = to_buy[stock]
-            else:
-                positions[stock] = combine_score(
-                    positions[stock], to_buy[stock]
-                )
+            add_ticker(positions, to_buy[stock])
 
     print('💵  🚀  DONE!!  🚀  💵')
 
     # --- Write global buy list
     positions = dict(sorted(positions.items(),
-                            key=lambda x: x[1][scoreIndex],
+                            key=lambda x: x[1][metric],
                             reverse=True))
     write_to_file(f"{outputDir}/to_buy.txt", positions)
 
