@@ -11,7 +11,7 @@ import sys
 def get_stock_list(inputDir):
     ticker_dict = {}
     filelist = [
-        f"{inputDir}/{f}" for f in ["list1.csv", "list2.csv", "list3.csv"]
+        f'{inputDir}/{file}' for file in ["list1.csv", "list2.csv", "list3.csv"]
     ]
 
     generic_words = [
@@ -172,7 +172,7 @@ def get_tickers(sub, stock_list, prev_tickers, metric='m', nPosts=-1,
 
     # Write sub-specific file
     write_to_file(
-        [f'{outputDir}/{sub}{suf}.txt' for suf in ['', '_all']],
+        [f'{outputDir}/{sub}{suf}.json' for suf in ['', '_all']],
         [top_tickers, weekly_tickers],
     )
     return top_tickers
@@ -233,7 +233,7 @@ def main(
     score=True,
     subs=["wallstreetbets", "stocks", "investing", "smallstreetbets"],
     time='week',
-    prevFile='./input/to_buy_prev.txt',
+    prevFile='./input/to_buy_prev.json',
     inputDir='./input',
     outputDir='./output',
     verbose=0,
@@ -279,14 +279,14 @@ def main(
     positions = dict(sorted(positions.items(),
                             key=lambda x: x[1][metric],
                             reverse=True))
-    write_to_file(f"{outputDir}/to_buy.txt", positions)
+    write_to_file(f"{outputDir}/to_buy.json", positions)
 
     # The sell list should be computed here, once all subs are processed
     to_sell = []
     for ticker in prev_tickers:
         if ticker not in positions:
             to_sell.append(ticker)
-    sell = open(f"{outputDir}/to_sell.txt", "w")
+    sell = open(f"{outputDir}/to_sell.json", "w")
     sell.writelines(map(lambda x: x+"\n", to_sell))
     sell.close()
 
@@ -308,8 +308,8 @@ if __name__ == '__main__':
                         ' month, week, year (default: week).', default='week')
     parser.add_argument('-p', '--prev', type=str, nargs='?', help='File'
                         ' to use as previous buy list. Default:'
-                        ' ./input/to_buy_prev.txt',
-                        default='./input/to_buy_prev.txt')
+                        ' ./input/to_buy_prev.json',
+                        default='./input/to_buy_prev.json')
     parser.add_argument('-i', '--input', type=str, nargs='?', help='Input'
                         ' directory. Default: ./input', default='./input')
     parser.add_argument('-o', '--output', type=str, nargs='?', help='Output'
