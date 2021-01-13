@@ -5,7 +5,9 @@ config.py
 __pycache__
 
 # Virtual env
-wsb_scraper_venv
+wsb_scraper_venv*
 
 # Output
 output/*/
+!output/example
+

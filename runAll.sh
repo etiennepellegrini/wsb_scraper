@@ -3,8 +3,7 @@ additionalArgs="$@"
 # --- Run all scenarios
 today=$(date '+%Y%m%dT%H%M')
 yday=$(date -d '-1 day' '+%Y%m%d')
-ydayDir=$(ls -td output/${yday}*/ | head -1)
-echo "ydayDir: $ydayDir"
+ydayDir=$(ls -td output/2021*/ | head -1)
 
 for scoreType in {mentions,score}; do
 
