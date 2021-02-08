@@ -10,4 +10,4 @@ wsb_scraper_venv*
 # Output
 output/*/
 !output/example
-
+runAll_*

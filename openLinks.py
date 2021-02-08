@@ -10,5 +10,5 @@ urls=''
 for tick in ticks:
     urls+= "https://reddit.com/" + ticks[tick]['topSubmission']['link'] + " "
 
-os.system(f"/Applications/Google\ Chrome.app/Contents/macOS/Google\ Chrome --new-window {urls}")
+os.system(f"/Applications/Brave\ Browser.app/Contents/MacOS/Brave\ Browser --new-window {urls}")
 
